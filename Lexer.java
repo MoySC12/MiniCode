@@ -4,13 +4,13 @@ public class Lexer {
     
     public static final String IDENTIFICADOR = "[a-zA-Z_][a-zA-Z0-9_]*";
     
-    // PASO 6: Ampliación para aceptar Hexadecimales (ej. 0xFF) o números normales (ej. 25)
+    // Ampliación para aceptar Hexadecimales (ej. 0xFF) o números normales (ej. 25)
     public static final String ENTERO = "0[xX][0-9a-fA-F]+|\\d+"; 
     public static final String DECIMAL = "\\d+\\.\\d+";
     public static final String CADENA = "\"[^\"]*\"|'[^']*'|`[^`]*`";
     
-    // PASO 5: Expansión del diccionario de Palabras Reservadas
-    public static final String PAL_RESERVADAS = "^(if|else|for|func|var|package|import|return|true|false|switch|case|default|break|continue|const|type|struct)$";    
+    // Expansión del diccionario de Palabras Reservadas para incluir tipos de datos nativos de Go
+    public static final String PAL_RESERVADAS = "^(if|else|for|func|var|package|import|return|true|false|switch|case|default|break|continue|const|type|struct|int|float64|string|bool)$";    
     
     public static final String OPERADORES_ARIT = "[+\\-*/%]";
     public static final String OPERADORES_REL = "==|!=|<=|>=|<|>";

@@ -65,10 +65,19 @@ public class Parser {
             }
         }
 
-        // --- REGLA 3: DECLARACIÓN DE VARIABLES CON 'var' ---
+        // --- REGLA 3: DECLARACIÓN DE VARIABLES CON 'var' --- (CORREGIDA PARA GO)
         if (primerToken.equals("var")) {
             if (tokens.size() < 2 || !tipos.get(1).equals("Identificador")) {
                 return "Error Sintáctico: 'var' debe estar seguido de un nombre de variable (Identificador).";
+            }
+            if (tokens.size() == 2) {
+                return "Error Sintáctico: La declaración de la variable '" + tokens.get(1) + "' debe especificar un tipo de dato o inicializarse con '='.";
+            }
+            String tercerToken = tokens.get(2);
+            boolean esTipo = tercerToken.equals("int") || tercerToken.equals("float64") || tercerToken.equals("string") || tercerToken.equals("bool");
+            
+            if (!esTipo && !tercerToken.equals("=")) {
+                return "Error Sintáctico: Se esperaba un tipo de dato (ej. int, float64) o una inicialización ('=') después de la variable '" + tokens.get(1) + "'.";
             }
         }
 
@@ -141,16 +150,65 @@ public class Parser {
             }
         }
 
-        // --- REGLA 6: ESTRUCTURA DE 'func' ---
+        // --- REGLA 6: ESTRUCTURA DE 'func' --- (CORREGIDA PARA GO)
         if (primerToken.equals("func")) {
             if (tokens.size() < 4) {
                 return "Error Sintáctico: Declaración de función incompleta.";
             }
-            if (!tipos.get(1).equals("Identificador") && !primerToken.equals("main")) {
+            if (!tipos.get(1).equals("Identificador") && !tokens.get(1).equals("main")) {
                 return "Error Sintáctico: Se esperaba el nombre de la función después de 'func'.";
             }
             if (!tokens.get(2).equals("(")) {
                 return "Error Sintáctico: Se esperaba '(' después del nombre de la función.";
+            }
+            
+            // Buscar el cierre del paréntesis
+            int indiceCierre = -1;
+            for (int i = 2; i < tokens.size(); i++) {
+                if (tokens.get(i).equals(")")) {
+                    indiceCierre = i;
+                    break;
+                }
+            }
+            
+            if (indiceCierre == -1) {
+                return "Error Sintáctico: Falta cerrar el paréntesis ')' en la declaración de la función.";
+            }
+            
+            // Validar que dentro de los paréntesis los parámetros tengan tipo
+            boolean esperandoIdentificador = true;
+            for (int i = 3; i < indiceCierre; i++) {
+                String t = tokens.get(i);
+                String tipoToken = tipos.get(i);
+                
+                if (esperandoIdentificador) {
+                    if (!tipoToken.equals("Identificador")) {
+                        return "Error Sintáctico: Se esperaba un identificador para el parámetro de la función.";
+                    }
+                    esperandoIdentificador = false;
+                } else {
+                    boolean esTipo = t.equals("int") || t.equals("float64") || t.equals("string") || t.equals("bool");
+                    if (esTipo) {
+                         if (i + 1 < indiceCierre && !tokens.get(i + 1).equals(",")) {
+                             return "Error Sintáctico: Falta una coma ',' separando los parámetros.";
+                         }
+                    } else if (t.equals(",")) {
+                         esperandoIdentificador = true;
+                    } else {
+                         return "Error Sintáctico: Se esperaba un tipo de dato válido (int, float64, string, bool) para el parámetro '" + tokens.get(i-1) + "'.";
+                    }
+                }
+            }
+            
+            // Validar si existe un tipo de retorno explícito antes de abrir la llave {
+            if (indiceCierre + 1 < tokens.size()) {
+                String tokenSiguiente = tokens.get(indiceCierre + 1);
+                if (!tokenSiguiente.equals("{")) {
+                    boolean esTipoRetorno = tokenSiguiente.equals("int") || tokenSiguiente.equals("float64") || tokenSiguiente.equals("string") || tokenSiguiente.equals("bool");
+                    if (!esTipoRetorno) {
+                        return "Error Sintáctico: Tipo de retorno inválido '" + tokenSiguiente + "'. Se esperaba int, float64, string, bool o la llave '{'.";
+                    }
+                }
             }
         }
 

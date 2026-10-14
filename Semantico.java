@@ -10,9 +10,17 @@ public class Semantico {
     public static String funcionActual = "";
     
     public static Stack<ArrayList<String>> pilaConstantes = new Stack<>();
-    
-    // ¡NUEVA MEMORIA! Rastreador de variables huérfanas (Declaradas pero no usadas)
     public static Stack<HashMap<String, Boolean>> pilaUsoVariables = new Stack<>();
+
+    public static String mapearTipoGo(String tipoGo) {
+        switch (tipoGo) {
+            case "int": return "Entero";
+            case "float64": return "Decimal";
+            case "string": return "Cadena";
+            case "bool": return "Booleano";
+            default: return tipoGo;
+        }
+    }
 
     public static String validarSemantica(AnalisisLinea analisis) {
         List<String> tokens = analisis.tokens;
@@ -22,7 +30,7 @@ public class Semantico {
 
         String primerToken = tokens.get(0);
         int parentesisActuales = 0;
-        List<String> parametrosPendientes = new ArrayList<>(); 
+        List<String[]> parametrosPendientes = new ArrayList<>(); 
 
         for (int i = 0; i < tokens.size(); i++) {
             String token = tokens.get(i);
@@ -31,9 +39,7 @@ public class Semantico {
             if (token.equals("(")) parentesisActuales++;
             if (token.equals(")")) parentesisActuales--;
 
-            // =========================================================
-            // 1. CONTROL DE ÁMBITO Y DESTRUCCIÓN DE MEMORIA LEYENDO '}'
-            // =========================================================
+            // 1. CONTROL DE ÁMBITO
             if (token.equals("func") && i + 1 < tokens.size() && tipos.get(i + 1).equals("Identificador")) {
                 funcionActual = tokens.get(i + 1); 
             }
@@ -41,24 +47,20 @@ public class Semantico {
             if (token.equals("{")) {
                 pilaAmbitos.push(new HashMap<>()); 
                 pilaConstantes.push(new ArrayList<>()); 
-                pilaUsoVariables.push(new HashMap<>()); // Abrimos registro de uso local
+                pilaUsoVariables.push(new HashMap<>()); 
                 
-                for (String param : parametrosPendientes) {
-                    pilaAmbitos.peek().put(param, "Parametro");
-                    // Nota: Los parámetros en Go están exentos de la regla "no usados", por lo que no los metemos a pilaUsoVariables
+                for (String[] param : parametrosPendientes) {
+                    pilaAmbitos.peek().put(param[0], param[1]);
                 }
                 parametrosPendientes.clear();
                 
             } else if (token.equals("}")) {
                 if (pilaAmbitos.size() > 1) {
-                    
-                    // ¡JEFE FINAL! Auditoría de variables no usadas ANTES de destruir el ámbito
                     for (String varLocal : pilaUsoVariables.peek().keySet()) {
                         if (!pilaUsoVariables.peek().get(varLocal)) {
                             return "Error Semántico: La variable '" + varLocal + "' fue declarada pero nunca se utilizó.";
                         }
                     }
-                    
                     pilaAmbitos.pop(); 
                     pilaConstantes.pop(); 
                     pilaUsoVariables.pop(); 
@@ -68,9 +70,7 @@ public class Semantico {
                 }
             }
 
-            // =========================================================
-            // 2. REGISTRO EN LA MEMORIA (VARIABLES, CONSTANTES Y PARÁMS)
-            // =========================================================
+            // 2. REGISTRO EN LA MEMORIA
             if (token.equals("var") && i + 1 < tokens.size() && tipos.get(i + 1).equals("Identificador")) {
                 String nombreVar = tokens.get(i + 1);
                 
@@ -81,13 +81,13 @@ public class Semantico {
                 String tipoAsignado = "Indefinido";
                 if (i + 2 < tokens.size()) {
                     if (tokens.get(i + 2).equals("=")) {
-                        tipoAsignado = obtenerTipoReal(i + 3, tokens, tipos); 
+                        tipoAsignado = obtenerTipoReal(i + 3, tokens, tipos, true); 
                     } else {
-                        tipoAsignado = obtenerTipoReal(i + 2, tokens, tipos); 
+                        tipoAsignado = mapearTipoGo(tokens.get(i + 2)); 
                     }
                 }
                 pilaAmbitos.peek().put(nombreVar, tipoAsignado); 
-                pilaUsoVariables.peek().put(nombreVar, false); // Nace con estatus "No usada"
+                pilaUsoVariables.peek().put(nombreVar, false);
             }
 
             if (token.equals("const") && i + 1 < tokens.size() && tipos.get(i + 1).equals("Identificador")) {
@@ -99,12 +99,12 @@ public class Semantico {
                 
                 String tipoAsignado = "Indefinido";
                 if (i + 2 < tokens.size() && tokens.get(i + 2).equals("=")) {
-                    tipoAsignado = obtenerTipoReal(i + 3, tokens, tipos); 
+                    tipoAsignado = obtenerTipoReal(i + 3, tokens, tipos, true); 
                 }
                 
                 pilaAmbitos.peek().put(nombreVar, tipoAsignado); 
                 pilaConstantes.peek().add(nombreVar); 
-                pilaUsoVariables.peek().put(nombreVar, false); // Nace con estatus "No usada"
+                pilaUsoVariables.peek().put(nombreVar, false);
             }
 
             if (token.equals(":=") && i > 0 && tipos.get(i - 1).equals("Identificador")) {
@@ -112,29 +112,30 @@ public class Semantico {
                 if (existeEnAmbitoActual(nombreVar)) {
                     return "Error Semántico: La variable '" + nombreVar + "' ya existe en este ámbito. Usa '='.";
                 }
-                String tipoDerecha = obtenerTipoReal(i + 1, tokens, tipos);
+                String tipoDerecha = obtenerTipoReal(i + 1, tokens, tipos, true);
                 pilaAmbitos.peek().put(nombreVar, tipoDerecha);
-                pilaUsoVariables.peek().put(nombreVar, false); // Nace con estatus "No usada"
+                pilaUsoVariables.peek().put(nombreVar, false);
             }
 
             if (primerToken.equals("func") && parentesisActuales > 0 && tipo.equals("Identificador")) {
-                parametrosPendientes.add(token); 
+                String paramTipo = "Indefinido";
+                if (i + 1 < tokens.size() && tipos.get(i + 1).equals("Palabra Reservada")) {
+                    paramTipo = mapearTipoGo(tokens.get(i + 1));
+                }
+                parametrosPendientes.add(new String[]{token, paramTipo}); 
             }
 
-            // =========================================================
-            // 3. COMPROBACIÓN DE TIPOS Y CONSTANTES EN REASIGNACIONES ('=')
-            // =========================================================
+            // 3. COMPROBACIÓN DE TIPOS Y CONSTANTES
             if (token.equals("=") && i > 0 && tipos.get(i - 1).equals("Identificador")) {
                 String nombreVar = tokens.get(i - 1);
                 
                 if (existeEnCualquierAmbito(nombreVar)) {
-                    
                     if (esConstante(nombreVar) && !primerToken.equals("const")) {
                         return "Error Semántico: Inmutabilidad violada. No se puede reasignar un valor a la constante '" + nombreVar + "'.";
                     }
 
                     String tipoGuardado = buscarTipoVariable(nombreVar);
-                    String tipoDerecha = obtenerTipoReal(i + 1, tokens, tipos);
+                    String tipoDerecha = obtenerTipoReal(i + 1, tokens, tipos, true);
                     
                     if (tipoGuardado.equals("Indefinido") || primerToken.equals("var") || primerToken.equals("const")) {
                         actualizarTipoVariable(nombreVar, tipoDerecha);
@@ -144,9 +145,7 @@ public class Semantico {
                 }
             }
             
-            // =========================================================
             // 4. USO DE VARIABLES Y VALIDACIÓN DE ARGUMENTOS
-            // =========================================================
             if (tipo.equals("Identificador")) {
                 boolean esDeclaracionVar = (i > 0 && tokens.get(i - 1).equals("var"));
                 boolean esDeclaracionConst = (i > 0 && tokens.get(i - 1).equals("const")); 
@@ -155,7 +154,7 @@ public class Semantico {
                 boolean esPaqueteFmt = token.equals("fmt") || token.equals("Println") || token.equals("Scan");
                 boolean esPaquete = (i > 0 && tokens.get(i - 1).equals("package"));
                 boolean esParametro = (primerToken.equals("func") && parentesisActuales > 0);
-                boolean esTipoRetorno = (primerToken.equals("func") && i > 0 && tokens.get(i - 1).equals(")"));
+                boolean esTipoRetorno = (primerToken.equals("func") && i > 0 && (tokens.get(i - 1).equals(")") || tipos.get(i - 1).equals("Palabra Reservada")));
 
                 if (!esDeclaracionVar && !esDeclaracionConst && !esAsignacionCorta && !esNombreDeFuncion && !esPaqueteFmt && !esPaquete && !esParametro && !esTipoRetorno) {
                     
@@ -163,7 +162,6 @@ public class Semantico {
                         return "Error Semántico: La variable o función '" + token + "' no existe o está fuera de ámbito.";
                     }
                     
-                    // ¡MARCAMOS LA VARIABLE COMO USADA AL LEERLA!
                     marcarVariableComoUsada(token);
 
                     if (i + 1 < tokens.size() && tokens.get(i + 1).equals("(")) {
@@ -179,9 +177,7 @@ public class Semantico {
                 }
             }
 
-            // =========================================================
-            // 5. LÓGICA MATEMÁTICA Y DIVISIÓN POR CERO
-            // =========================================================
+            // 5. LÓGICA MATEMÁTICA Y RELACIONAL
             if (tipo.equals("Operador Aritmético")) {
                 if (token.equals("/") || token.equals("%")) {
                     if (i + 1 < tokens.size() && (tokens.get(i + 1).equals("0") || tokens.get(i + 1).equals("0.0"))) {
@@ -189,8 +185,8 @@ public class Semantico {
                     }
                 }
 
-                String tipoIzq = obtenerTipoReal(i - 1, tokens, tipos);
-                String tipoDer = obtenerTipoReal(i + 1, tokens, tipos);
+                String tipoIzq = obtenerTipoReal(i - 1, tokens, tipos, false);
+                String tipoDer = obtenerTipoReal(i + 1, tokens, tipos, false);
                 
                 if (tipoIzq != null && tipoDer != null) {
                     if (tipoIzq.equals("Cadena") || tipoDer.equals("Cadena") || tipoIzq.equals("Booleano") || tipoDer.equals("Booleano")) {
@@ -200,12 +196,12 @@ public class Semantico {
             }
             
             if (tipo.equals("Operador Relacional")) {
-                String tipoIzq = obtenerTipoReal(i - 1, tokens, tipos);
-                String tipoDer = obtenerTipoReal(i + 1, tokens, tipos);
+                String tipoIzq = obtenerTipoReal(i - 1, tokens, tipos, false);
+                String tipoDer = obtenerTipoReal(i + 1, tokens, tipos, false);
                 
                 if (tipoIzq != null && tipoDer != null && !tipoIzq.equals("Desconocido") && !tipoDer.equals("Desconocido")) {
-                    boolean izqEsNum = tipoIzq.equals("Entero") || tipoIzq.equals("Decimal");
-                    boolean derEsNum = tipoDer.equals("Entero") || tipoDer.equals("Decimal");
+                    boolean izqEsNum = (tipoIzq.equals("Entero") || tipoIzq.equals("Decimal"));
+                    boolean derEsNum = (tipoDer.equals("Entero") || tipoDer.equals("Decimal"));
                     
                     if (izqEsNum && derEsNum) continue; 
                     
@@ -215,15 +211,13 @@ public class Semantico {
                 }
             }
 
-            // =========================================================
-            // 6. COMPROBACIÓN DE TIPO DE RETORNO (RETURN)
-            // =========================================================
+            // 6. COMPROBACIÓN DE RETORNO
             if (token.equals("return")) {
                 String tipoEsperado = tiposRetornoFunciones.getOrDefault(funcionActual, "Vacio");
                 String tipoDevuelto = "Vacio";
 
                 if (i + 1 < tokens.size() && !tokens.get(i + 1).equals("}")) {
-                    tipoDevuelto = obtenerTipoReal(i + 1, tokens, tipos);
+                    tipoDevuelto = obtenerTipoReal(i + 1, tokens, tipos, true);
                 }
 
                 if (tipoEsperado.equals("Vacio") && !tipoDevuelto.equals("Vacio") && !tipoDevuelto.equals("Desconocido")) {
@@ -235,15 +229,13 @@ public class Semantico {
                 }
             }
         }
-        
         return null; 
     }
 
     // =========================================================
-    // MÉTODOS AUXILIARES
+    // MÉTODOS AUXILIARES ACTUALIZADOS
     // =========================================================
     
-    // ¡NUEVO! Cambia el estado de una variable a 'true' cuando el código la menciona
     private static void marcarVariableComoUsada(String nombre) {
         for (int i = pilaUsoVariables.size() - 1; i >= 0; i--) {
             if (pilaUsoVariables.get(i).containsKey(nombre)) {
@@ -289,15 +281,38 @@ public class Semantico {
         }
     }
 
-    private static String obtenerTipoReal(int indice, List<String> tokens, List<String> tipos) {
+    // EL MOTOR DE EVALUACIÓN DE TIPOS CORREGIDO
+    private static String obtenerTipoReal(int indice, List<String> tokens, List<String> tipos, boolean evaluarExpresionCompleta) {
         if (indice < 0 || indice >= tokens.size()) return "Desconocido";
         
-        String token = tokens.get(indice);
-        String tipo = tipos.get(indice);
+        // 1. Detección profunda de operadores que transforman la expresión en booleana
+        if (evaluarExpresionCompleta) {
+            for (int j = indice; j < tokens.size(); j++) {
+                String tipo = tipos.get(j);
+                if (tipo.equals("Operador Relacional") || tipo.equals("Operador Lógico")) {
+                    return "Booleano";
+                }
+            }
+        }
         
+        // 2. Omitir paréntesis para extraer la variable o función real
+        int idx = indice;
+        while (idx < tokens.size() && tokens.get(idx).equals("(")) {
+            idx++;
+        }
+        if (idx >= tokens.size()) return "Desconocido";
+        
+        String token = tokens.get(idx);
+        String tipo = tipos.get(idx);
+        
+        // 3. Resolución de Identificadores y extracción de tipo de retorno en llamadas a función
         if (tipo.equals("Identificador")) {
-            if (existeEnCualquierAmbito(token)) {
-                return buscarTipoVariable(token);
+            String tipoGuardado = buscarTipoVariable(token);
+            if ("Funcion".equals(tipoGuardado)) {
+                return tiposRetornoFunciones.getOrDefault(token, "Vacio");
+            }
+            if (tipoGuardado != null) {
+                return tipoGuardado;
             }
             return "Desconocido";
         }
@@ -363,7 +378,7 @@ public class Semantico {
                 if (indiceCierreParentesis != -1 && indiceCierreParentesis + 1 < linea.tokens.size()) {
                     String tokenSiguiente = linea.tokens.get(indiceCierreParentesis + 1);
                     if (!tokenSiguiente.equals("{")) {
-                        tipoRetorno = tokenSiguiente.substring(0, 1).toUpperCase() + tokenSiguiente.substring(1).toLowerCase();
+                        tipoRetorno = mapearTipoGo(tokenSiguiente);
                     }
                 }
                 tiposRetornoFunciones.put(nombreFunc, tipoRetorno);

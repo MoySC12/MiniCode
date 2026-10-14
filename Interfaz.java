@@ -118,7 +118,7 @@ public class Interfaz extends JFrame {
         panelBotonesVistas.setBackground(bgCream);
         
         btnVistaLexico = new JButton("Análisis Léxico");
-        btnVistaSemantico = new JButton("Análisis Semántico");
+        btnVistaSemantico = new JButton("Análisis  Sintáctico/Semántico");
         btnVistaSalidas = new JButton("Salidas");
         
         panelBotonesVistas.add(btnVistaLexico);
@@ -142,7 +142,7 @@ public class Interfaz extends JFrame {
         panelLexico.add(scrollLexico, BorderLayout.CENTER);
         
         // VISTA 2: Análisis Semántico (Usando la tabla sintáctica actual)
-        String[] colSintactico = {"Línea", "Instrucción", "Validación Semántica"};
+        String[] colSintactico = {"Línea", "Instrucción", "Validación"};
         modeloSintactico = new DefaultTableModel(colSintactico, 0);
         tablaSintactica = new JTable(modeloSintactico);
         JScrollPane scrollSintactico = new JScrollPane(tablaSintactica);
