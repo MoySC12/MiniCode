@@ -1,0 +1,82 @@
+package main
+
+import "fmt"
+
+func main() {
+    var A int
+    A = 10
+    var B int
+    B = 5
+    var C int
+    C = 2
+    var D int
+    D = 4
+    var E int
+    E = 2
+    var F int
+    F = 1
+    var G int
+    G = 3
+    var H int
+    H = 6
+
+    // Ejercicio 1
+    e1 := A + B
+    fmt.Println(e1)
+
+    // Ejercicio 2
+    e2 := A + B * C
+    fmt.Println(e2)
+
+    // Ejercicio 3
+    e3 := (A + B) * C
+    fmt.Println(e3)
+
+    // Ejercicio 4
+    e4 := A * B + C / D
+    fmt.Println(e4)
+
+    // Ejercicio 5
+    e5 := (A + B) * (C - D)
+    fmt.Println(e5)
+
+    // Ejercicio 6
+    e6 := A + (B - C) * D
+    fmt.Println(e6)
+
+    // Ejercicio 7
+    e7 := (A - B) / C + D
+    fmt.Println(e7)
+
+    // Ejercicio 8
+    e8 := A * (B + C) - D / E
+    fmt.Println(e8)
+
+    // Ejercicio 9
+    e9 := (A + B) / (C - D) + E
+    fmt.Println(e9)
+
+    // Ejercicio 10
+    e10 := A + B * (C - D) / E
+    fmt.Println(e10)
+
+    // Ejercicio 11
+    e11 := ((A + B) * C) - D
+    fmt.Println(e11)
+
+    // Ejercicio 12
+    e12 := (A - B) * (C + D) / (E - F)
+    fmt.Println(e12)
+
+    // Ejercicio 13
+    e13 := A + B * (C ^ D - E) / (F + G) - H
+    fmt.Println(e13)
+
+    // Ejercicio 14
+    e14 := ((A + B) / C) ^ (D - E)
+    fmt.Println(e14)
+
+    // Ejercicio 15
+    e15 := ((A - B) * (C + D)) ^ (E / F)
+    fmt.Println(e15)
+}
