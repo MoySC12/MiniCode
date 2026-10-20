@@ -14,6 +14,7 @@ public class Interfaz extends JFrame {
     private JTextArea editorCodigo;
     private JTextArea numerosLinea; 
     private JTextArea consola;
+    private JTextArea areaIntermedio; // Área para mostrar cuádruplos y notaciones
     
     // Tablas independientes
     private JTable tablaLexica;
@@ -26,6 +27,7 @@ public class Interfaz extends JFrame {
     private JPanel panelVistas;
     private JButton btnVistaLexico;
     private JButton btnVistaSemantico;
+    private JButton btnVistaIntermedio;
     private JButton btnVistaSalidas;
     
     // Variables de control de archivos
@@ -38,11 +40,11 @@ public class Interfaz extends JFrame {
     private final Color btnCoral = Color.decode("#E76F51");
     private final Color textDark = Color.decode("#264653");
     private final Color bgGris = Color.decode("#E9ECEF"); 
-    private final Color btnInactivo = Color.decode("#A8DADC"); // Color para botones no seleccionados
+    private final Color btnInactivo = Color.decode("#A8DADC");
 
     public Interfaz() {
         setTitle("MiniCode");
-        setSize(1100, 700);
+        setSize(1150, 700);
         
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -91,7 +93,6 @@ public class Interfaz extends JFrame {
         btnAnalizar.setForeground(Color.WHITE);
         btnAnalizar.addActionListener(e -> {
             analizarCodigo();
-            // Al analizar, saltar automáticamente a la vista de Salidas para ver el resultado
             cambiarVista("SALIDAS"); 
         });
         
@@ -113,16 +114,18 @@ public class Interfaz extends JFrame {
         JPanel panelDerecho = new JPanel(new BorderLayout(0, 10));
         panelDerecho.setBackground(bgCream);
         
-        // 1. Barra de Botones Superiores
-        JPanel panelBotonesVistas = new JPanel(new GridLayout(1, 3, 5, 0));
+        // 1. Barra de Botones Superiores (4 vistas)
+        JPanel panelBotonesVistas = new JPanel(new GridLayout(1, 4, 5, 0));
         panelBotonesVistas.setBackground(bgCream);
         
         btnVistaLexico = new JButton("Análisis Léxico");
-        btnVistaSemantico = new JButton("Análisis  Sintáctico/Semántico");
+        btnVistaSemantico = new JButton("Sintáctico/Semántico");
+        btnVistaIntermedio = new JButton("Código Intermedio");
         btnVistaSalidas = new JButton("Salidas");
         
         panelBotonesVistas.add(btnVistaLexico);
         panelBotonesVistas.add(btnVistaSemantico);
+        panelBotonesVistas.add(btnVistaIntermedio);
         panelBotonesVistas.add(btnVistaSalidas);
         
         panelDerecho.add(panelBotonesVistas, BorderLayout.NORTH);
@@ -141,7 +144,7 @@ public class Interfaz extends JFrame {
         panelLexico.setBackground(bgCream);
         panelLexico.add(scrollLexico, BorderLayout.CENTER);
         
-        // VISTA 2: Análisis Semántico (Usando la tabla sintáctica actual)
+        // VISTA 2: Análisis Sintáctico/Semántico
         String[] colSintactico = {"Línea", "Instrucción", "Validación"};
         modeloSintactico = new DefaultTableModel(colSintactico, 0);
         tablaSintactica = new JTable(modeloSintactico);
@@ -149,8 +152,20 @@ public class Interfaz extends JFrame {
         JPanel panelSemantico = new JPanel(new BorderLayout());
         panelSemantico.setBackground(bgCream);
         panelSemantico.add(scrollSintactico, BorderLayout.CENTER);
+
+        // VISTA 3: Código Intermedio (Notaciones y Cuádruplos)
+        areaIntermedio = new JTextArea();
+        areaIntermedio.setEditable(false);
+        areaIntermedio.setBackground(bgGris);
+        areaIntermedio.setForeground(textDark);
+        areaIntermedio.setFont(new Font("Consolas", Font.PLAIN, 14));
+        areaIntermedio.setMargin(new Insets(10, 10, 10, 10));
+        JScrollPane scrollIntermedio = new JScrollPane(areaIntermedio);
+        JPanel panelIntermedio = new JPanel(new BorderLayout());
+        panelIntermedio.setBackground(bgCream);
+        panelIntermedio.add(scrollIntermedio, BorderLayout.CENTER);
         
-        // VISTA 3: Salidas (Consola ocupa todo el espacio ahora)
+        // VISTA 4: Salidas (Consola)
         consola = new JTextArea();
         consola.setEditable(false);
         consola.setBackground(bgGris);
@@ -162,9 +177,10 @@ public class Interfaz extends JFrame {
         panelSalidas.setBackground(bgCream);
         panelSalidas.add(scrollConsola, BorderLayout.CENTER);
 
-        // Agregar las 3 vistas al CardLayout
+        // Agregar las 4 vistas al CardLayout
         panelVistas.add(panelLexico, "LEXICO");
         panelVistas.add(panelSemantico, "SEMANTICO");
+        panelVistas.add(panelIntermedio, "INTERMEDIO");
         panelVistas.add(panelSalidas, "SALIDAS");
 
         panelDerecho.add(panelVistas, BorderLayout.CENTER);
@@ -175,13 +191,13 @@ public class Interfaz extends JFrame {
         // 3. Eventos de los botones para cambiar de vista
         btnVistaLexico.addActionListener(e -> cambiarVista("LEXICO"));
         btnVistaSemantico.addActionListener(e -> cambiarVista("SEMANTICO"));
+        btnVistaIntermedio.addActionListener(e -> cambiarVista("INTERMEDIO"));
         btnVistaSalidas.addActionListener(e -> cambiarVista("SALIDAS"));
         
         // Iniciar con la vista Léxica por defecto
         cambiarVista("LEXICO");
     }
 
-    // Método para cambiar la tarjeta visible y pintar los botones
     private void cambiarVista(String vista) {
         cardLayout.show(panelVistas, vista);
         
@@ -190,6 +206,8 @@ public class Interfaz extends JFrame {
         btnVistaLexico.setForeground(textDark);
         btnVistaSemantico.setBackground(btnInactivo);
         btnVistaSemantico.setForeground(textDark);
+        btnVistaIntermedio.setBackground(btnInactivo);
+        btnVistaIntermedio.setForeground(textDark);
         btnVistaSalidas.setBackground(btnInactivo);
         btnVistaSalidas.setForeground(textDark);
         
@@ -200,6 +218,9 @@ public class Interfaz extends JFrame {
         } else if (vista.equals("SEMANTICO")) {
             btnVistaSemantico.setBackground(textDark);
             btnVistaSemantico.setForeground(Color.WHITE);
+        } else if (vista.equals("INTERMEDIO")) {
+            btnVistaIntermedio.setBackground(textDark);
+            btnVistaIntermedio.setForeground(Color.WHITE);
         } else if (vista.equals("SALIDAS")) {
             btnVistaSalidas.setBackground(textDark);
             btnVistaSalidas.setForeground(Color.WHITE);
@@ -255,7 +276,7 @@ public class Interfaz extends JFrame {
     private void actualizarTitulo() {
         String nombre = (archivoActual != null) ? archivoActual.getName() : "Sin título";
         String indicador = cambiosSinGuardar ? "*" : "";
-        setTitle("MiniCode" + nombre + indicador);
+        setTitle("MiniCode - " + nombre + indicador);
     }
 
     private boolean confirmarGuardado() {
@@ -356,6 +377,7 @@ public class Interfaz extends JFrame {
         modeloLexico.setRowCount(0);
         modeloSintactico.setRowCount(0);
         consola.setText("");
+        areaIntermedio.setText("");
         
         String texto = editorCodigo.getText().trim();
         if (texto.isEmpty()) {
@@ -393,9 +415,14 @@ public class Interfaz extends JFrame {
         }
         
         if (errores.length() == 0) {
-            consola.setText("El programa es válido.\nNo se encontraron errores léxicos ni semánticos.");
+            consola.setText("El programa es válido.");
+            // Generar el reporte de notaciones y cuádruplos
+            String reporteIntermedio = CodigoIntermedio.generarReporte(resultados);
+            areaIntermedio.setText(reporteIntermedio);
+            areaIntermedio.setCaretPosition(0);
         } else {
             consola.setText("Se encontraron errores:\n\n" + errores.toString());
+            areaIntermedio.setText("No se puede generar el código intermedio debido a que existen errores en el código fuente.\nCorrige los errores.");
         }
     }
 
@@ -404,8 +431,9 @@ public class Interfaz extends JFrame {
         modeloLexico.setRowCount(0);
         modeloSintactico.setRowCount(0);
         consola.setText("");
+        areaIntermedio.setText("");
         actualizarLineas(); 
-        cambiarVista("LEXICO"); // Regresa a la vista original al limpiar
+        cambiarVista("LEXICO");
     }
 
     public static void main(String[] args) {
