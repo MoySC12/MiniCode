@@ -6,7 +6,7 @@ import java.util.Stack;
 
 public class CodigoIntermedio {
 
-    // Estructura para representar cada fila de la tabla de cuádruplos
+    //Estructura para representar cada fila de la tabla de cuádruplos
     public static class Cuadruplo {
         public int indice;
         public String operador;
@@ -23,7 +23,7 @@ public class CodigoIntermedio {
         }
     }
 
-    // Estructura para almacenar cada expresión extraída, sus conversiones, cuádruplos y resultado
+    //Estructura para almacenar cada expresión extraída, sus conversiones, cuádruplos y resultado
     public static class ExpresionExtraida {
         public int numeroLinea;
         public String instruccionOriginal;
