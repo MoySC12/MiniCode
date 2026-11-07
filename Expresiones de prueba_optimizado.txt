@@ -1,0 +1,80 @@
+package main
+import "fmt"
+func calcularEnergiaMecanica(masa float64, altura float64, velocidad float64) float64 {
+    var energiaPotencial float64
+    energiaPotencial = masa * 9.81 * altura
+    var energiaCinetica float64
+    energiaCinetica = (masa * (velocidad ^ 2)) / 2.0
+    var energiaTotal float64
+    energiaTotal = energiaPotencial + energiaCinetica + 25
+    fmt.Println("Energia calculada:", energiaTotal)
+    return energiaTotal
+}
+func procesarLoteProduccion(unidadesBase int, turnos int) int {
+    var produccionBruta int
+    produccionBruta = unidadesBase * turnos + 40
+    var mermaEstimada int
+    mermaEstimada = (unidadesBase + 20) / 4
+    var produccionNeta int
+    produccionNeta = produccionBruta - mermaEstimada
+    if produccionNeta >= 100 {
+        fmt.Println("Meta de produccion alcanzada:", produccionNeta)
+    } else {
+        fmt.Println("Produccion por debajo de la meta:", produccionNeta)
+    }
+    var iterador int
+    iterador = 1
+    var acumuladoTurno int
+    acumuladoTurno = 0
+    for iterador <= turnos {
+        acumuladoTurno = acumuladoTurno + iterador * 4
+        iterador = iterador + 1
+    }
+    var resultadoFinal int
+    resultadoFinal = produccionNeta + acumuladoTurno
+    return resultadoFinal
+}
+func validarEstadoSistema(temperatura float64, presion float64, activo bool) bool {
+    var tempSegura bool
+    tempSegura = temperatura < 95.5
+    var presionSegura bool
+    presionSegura = presion <= 120.0
+    var estadoOperativo bool
+    estadoOperativo = tempSegura && presionSegura && activo
+    if !estadoOperativo {
+        fmt.Println("Alerta: Sistema fuera de parametros seguros")
+    } else {
+        fmt.Println("Sistema operando dentro de parametros normales")
+    }
+    return estadoOperativo
+}
+func main() {
+    fmt.Println("=== INICIANDO PRUEBA ===")
+    fmt.Println("Plegado 1:", 70)
+    fmt.Println("Plegado 2:", 40)
+    fmt.Println("Plegado 3:", 105)
+    fmt.Println("Resultado en cascada:", 96)
+    fmt.Println("Exp 1:", 26)
+    fmt.Println("Exp 2:", 50.5)
+    fmt.Println("Exp 3:", -30)
+    fmt.Println("Exp 4:", 22)
+    fmt.Println("Exp 5:", 6.5)
+    fmt.Println("Exp 6:", 68)
+    fmt.Println("Exp 7:", -5.5)
+    fmt.Println("Exp 8:", 5)
+    fmt.Println("Exp 9:", 30)
+    fmt.Println("Exp 10:", 21.5)
+    fmt.Println("Exp 11:", 56.25)
+    fmt.Println("Exp 12:", 900)
+    var energiaCalculada float64
+    energiaCalculada = calcularEnergiaMecanica(12.5, 8.0, 4.0)
+    fmt.Println("Retorno Energia:", energiaCalculada)
+    var totalProduccion int
+    totalProduccion = procesarLoteProduccion(45, 3)
+    fmt.Println("Retorno Produccion:", totalProduccion)
+    var sistemaOk bool
+    sistemaOk = validarEstadoSistema(78.4, 105.0, true)
+    fmt.Println("Estado del sistema:", sistemaOk)
+    fmt.Println("Total con IVA:", 2320)
+    fmt.Println("=== EJECUCION Y ANALISIS COMPLETADOS ===")
+}

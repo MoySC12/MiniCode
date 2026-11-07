@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,20 +15,31 @@ public class Interfaz extends JFrame {
     private JTextArea editorCodigo;
     private JTextArea numerosLinea; 
     private JTextArea consola;
-    private JTextArea areaIntermedio; // Área para mostrar cuádruplos y notaciones
+    private JTextArea areaIntermedio;
     
-    // Tablas independientes
+    // Componentes para la vista de Optimización
+    private JTextArea areaOptNuevo;
+    private JTextArea numerosOptNuevo;
+    private JTable tablaCambiosOpt;
+    private DefaultTableModel modeloCambiosOpt;
+    private JLabel lblMetricasOptimizacion;
+    
+    // Tablas independientes para Léxico, Sintáctico y Semántico
     private JTable tablaLexica;
     private DefaultTableModel modeloLexico;
     private JTable tablaSintactica;
     private DefaultTableModel modeloSintactico;
+    private JTable tablaSemantica;
+    private DefaultTableModel modeloSemantico;
     
-    // Control de vistas (CardLayout)
+    // Control de vistas (CardLayout de 6 pestañas)
     private CardLayout cardLayout;
     private JPanel panelVistas;
     private JButton btnVistaLexico;
+    private JButton btnVistaSintactico;
     private JButton btnVistaSemantico;
     private JButton btnVistaIntermedio;
+    private JButton btnVistaOptimizacion;
     private JButton btnVistaSalidas;
     
     // Variables de control de archivos
@@ -44,7 +56,7 @@ public class Interfaz extends JFrame {
 
     public Interfaz() {
         setTitle("MiniCode");
-        setSize(1150, 700);
+        setSize(1320, 750);
         
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -58,13 +70,14 @@ public class Interfaz extends JFrame {
         
         crearMenu();
         
-        setLayout(new GridLayout(1, 2, 10, 10));
+        setLayout(new BorderLayout());
 
         // ==========================================
         // PANEL IZQUIERDO: EDITOR DE CÓDIGO
         // ==========================================
         JPanel panelIzquierdo = new JPanel(new BorderLayout());
         panelIzquierdo.setBackground(bgCream);
+        panelIzquierdo.setMinimumSize(new Dimension(250, 400));
         
         editorCodigo = new JTextArea();
         editorCodigo.setFont(new Font("Consolas", Font.PLAIN, 14));
@@ -109,23 +122,28 @@ public class Interfaz extends JFrame {
         panelIzquierdo.add(btnPanel, BorderLayout.SOUTH);
 
         // ==========================================
-        // PANEL DERECHO: VISTAS INTERCAMBIABLES
+        // PANEL DERECHO: 6 VISTAS INTERCAMBIABLES
         // ==========================================
         JPanel panelDerecho = new JPanel(new BorderLayout(0, 10));
         panelDerecho.setBackground(bgCream);
+        panelDerecho.setMinimumSize(new Dimension(400, 400));
         
-        // 1. Barra de Botones Superiores (4 vistas)
-        JPanel panelBotonesVistas = new JPanel(new GridLayout(1, 4, 5, 0));
+        // 1. Barra de Botones Superiores (6 vistas independientes)
+        JPanel panelBotonesVistas = new JPanel(new GridLayout(1, 6, 4, 0));
         panelBotonesVistas.setBackground(bgCream);
         
-        btnVistaLexico = new JButton("Análisis Léxico");
-        btnVistaSemantico = new JButton("Sintáctico/Semántico");
-        btnVistaIntermedio = new JButton("Código Intermedio");
+        btnVistaLexico = new JButton("Léxico");
+        btnVistaSintactico = new JButton("Sintáctico");
+        btnVistaSemantico = new JButton("Semántico");
+        btnVistaIntermedio = new JButton("Cód. Intermedio");
+        btnVistaOptimizacion = new JButton("Optimización");
         btnVistaSalidas = new JButton("Salidas");
         
         panelBotonesVistas.add(btnVistaLexico);
+        panelBotonesVistas.add(btnVistaSintactico);
         panelBotonesVistas.add(btnVistaSemantico);
         panelBotonesVistas.add(btnVistaIntermedio);
+        panelBotonesVistas.add(btnVistaOptimizacion);
         panelBotonesVistas.add(btnVistaSalidas);
         
         panelDerecho.add(panelBotonesVistas, BorderLayout.NORTH);
@@ -144,16 +162,25 @@ public class Interfaz extends JFrame {
         panelLexico.setBackground(bgCream);
         panelLexico.add(scrollLexico, BorderLayout.CENTER);
         
-        // VISTA 2: Análisis Sintáctico/Semántico
-        String[] colSintactico = {"Línea", "Instrucción", "Validación"};
+        // VISTA 2: Análisis Sintáctico (Tabla independiente)
+        String[] colSintactico = {"Línea", "Instrucción", "Validación Sintáctica"};
         modeloSintactico = new DefaultTableModel(colSintactico, 0);
         tablaSintactica = new JTable(modeloSintactico);
         JScrollPane scrollSintactico = new JScrollPane(tablaSintactica);
+        JPanel panelSintactico = new JPanel(new BorderLayout());
+        panelSintactico.setBackground(bgCream);
+        panelSintactico.add(scrollSintactico, BorderLayout.CENTER);
+
+        // VISTA 3: Análisis Semántico (Tabla independiente)
+        String[] colSemantico = {"Línea", "Instrucción", "Validación Semántica"};
+        modeloSemantico = new DefaultTableModel(colSemantico, 0);
+        tablaSemantica = new JTable(modeloSemantico);
+        JScrollPane scrollSemantico = new JScrollPane(tablaSemantica);
         JPanel panelSemantico = new JPanel(new BorderLayout());
         panelSemantico.setBackground(bgCream);
-        panelSemantico.add(scrollSintactico, BorderLayout.CENTER);
+        panelSemantico.add(scrollSemantico, BorderLayout.CENTER);
 
-        // VISTA 3: Código Intermedio (Notaciones y Cuádruplos)
+        // VISTA 4: Código Intermedio (Original y Optimizado)
         areaIntermedio = new JTextArea();
         areaIntermedio.setEditable(false);
         areaIntermedio.setBackground(bgGris);
@@ -164,8 +191,11 @@ public class Interfaz extends JFrame {
         JPanel panelIntermedio = new JPanel(new BorderLayout());
         panelIntermedio.setBackground(bgCream);
         panelIntermedio.add(scrollIntermedio, BorderLayout.CENTER);
+
+        // VISTA 5: Optimización de Código (Código + Tabla de Líneas Sustituidas + Guardar)
+        JPanel panelOptimizacion = construirPanelOptimizacion();
         
-        // VISTA 4: Salidas (Consola)
+        // VISTA 6: Salidas (Consola)
         consola = new JTextArea();
         consola.setEditable(false);
         consola.setBackground(bgGris);
@@ -177,50 +207,160 @@ public class Interfaz extends JFrame {
         panelSalidas.setBackground(bgCream);
         panelSalidas.add(scrollConsola, BorderLayout.CENTER);
 
-        // Agregar las 4 vistas al CardLayout
+        // Agregar las 6 vistas al CardLayout
         panelVistas.add(panelLexico, "LEXICO");
+        panelVistas.add(panelSintactico, "SINTACTICO");
         panelVistas.add(panelSemantico, "SEMANTICO");
         panelVistas.add(panelIntermedio, "INTERMEDIO");
+        panelVistas.add(panelOptimizacion, "OPTIMIZACION");
         panelVistas.add(panelSalidas, "SALIDAS");
 
         panelDerecho.add(panelVistas, BorderLayout.CENTER);
 
-        add(panelIzquierdo);
-        add(panelDerecho);
+        // Separador redimensionable entre el Editor de Código y las Vistas de Salida
+        JSplitPane splitPrincipal = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelIzquierdo, panelDerecho);
+        splitPrincipal.setResizeWeight(0.42);
+        splitPrincipal.setDividerLocation(520);
+        splitPrincipal.setOneTouchExpandable(true);
+        splitPrincipal.setContinuousLayout(true);
+        splitPrincipal.setBackground(bgCream);
+
+        add(splitPrincipal, BorderLayout.CENTER);
         
         // 3. Eventos de los botones para cambiar de vista
         btnVistaLexico.addActionListener(e -> cambiarVista("LEXICO"));
+        btnVistaSintactico.addActionListener(e -> cambiarVista("SINTACTICO"));
         btnVistaSemantico.addActionListener(e -> cambiarVista("SEMANTICO"));
         btnVistaIntermedio.addActionListener(e -> cambiarVista("INTERMEDIO"));
+        btnVistaOptimizacion.addActionListener(e -> cambiarVista("OPTIMIZACION"));
         btnVistaSalidas.addActionListener(e -> cambiarVista("SALIDAS"));
         
-        // Iniciar con la vista Léxica por defecto
         cambiarVista("LEXICO");
+    }
+
+    private JPanel construirPanelOptimizacion() {
+        JPanel panelOptimizacion = new JPanel(new BorderLayout(0, 5));
+        panelOptimizacion.setBackground(bgCream);
+
+        // Barra superior con título y botón para guardar el código optimizado
+        JPanel barraAccionesOpt = new JPanel(new BorderLayout());
+        barraAccionesOpt.setBackground(bgCream);
+        barraAccionesOpt.add(new JLabel(" Código Optimizado"), BorderLayout.WEST);
+
+        JButton btnGuardarOpt = new JButton("Guardar Optimizado...");
+        btnGuardarOpt.setBackground(btnTeal);
+        btnGuardarOpt.setForeground(Color.WHITE);
+        btnGuardarOpt.addActionListener(e -> guardarCodigoOptimizado());
+
+        JPanel panelBotonDerecha = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 2));
+        panelBotonDerecha.setBackground(bgCream);
+        panelBotonDerecha.add(btnGuardarOpt);
+        barraAccionesOpt.add(panelBotonDerecha, BorderLayout.EAST);
+
+        panelOptimizacion.add(barraAccionesOpt, BorderLayout.NORTH);
+
+        // Área de Código Optimizado (Mitad superior)
+        areaOptNuevo = new JTextArea();
+        areaOptNuevo.setEditable(false);
+        areaOptNuevo.setBackground(bgGris);
+        areaOptNuevo.setForeground(textDark);
+        areaOptNuevo.setFont(new Font("Consolas", Font.PLAIN, 13));
+        areaOptNuevo.setMargin(new Insets(5, 5, 5, 5));
+
+        numerosOptNuevo = new JTextArea("1");
+        numerosOptNuevo.setBackground(Color.decode("#DEE2E6"));
+        numerosOptNuevo.setForeground(Color.GRAY);
+        numerosOptNuevo.setEditable(false);
+        numerosOptNuevo.setFont(new Font("Consolas", Font.PLAIN, 13));
+        numerosOptNuevo.setMargin(new Insets(5, 5, 5, 5));
+
+        JScrollPane scrollOptUnico = new JScrollPane(areaOptNuevo);
+        scrollOptUnico.setRowHeaderView(numerosOptNuevo);
+
+        // Tabla inferior: Bitácora de líneas sustituidas y eliminadas (Mitad inferior)
+        String[] colCambios = {"Línea Orig.", "Técnica Aplicada", "Original", "Sustituida"};
+        modeloCambiosOpt = new DefaultTableModel(colCambios, 0);
+        tablaCambiosOpt = new JTable(modeloCambiosOpt);
+        tablaCambiosOpt.getColumnModel().getColumn(0).setMaxWidth(85);
+        JScrollPane scrollTablaCambios = new JScrollPane(tablaCambiosOpt);
+
+        JPanel panelInferiorTabla = new JPanel(new BorderLayout());
+        panelInferiorTabla.setBackground(bgCream);
+        panelInferiorTabla.add(new JLabel(" Líneas Optimizadas y Sustituidas:"), BorderLayout.NORTH);
+        panelInferiorTabla.add(scrollTablaCambios, BorderLayout.CENTER);
+
+        // Split vertical entre el Código Optimizado (arriba) y la Tabla de Sustituciones (abajo)
+        JSplitPane splitVerticalOpt = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollOptUnico, panelInferiorTabla);
+        splitVerticalOpt.setResizeWeight(0.58);
+        splitVerticalOpt.setDividerLocation(330);
+        splitVerticalOpt.setOneTouchExpandable(true);
+
+        lblMetricasOptimizacion = new JLabel(" Tiempo de optimización: 0 ms | Tamaño original: 0 bytes | Optimizado: 0 bytes");
+        lblMetricasOptimizacion.setFont(new Font("Consolas", Font.BOLD, 12));
+        lblMetricasOptimizacion.setForeground(textDark);
+        lblMetricasOptimizacion.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        panelOptimizacion.add(splitVerticalOpt, BorderLayout.CENTER);
+        panelOptimizacion.add(lblMetricasOptimizacion, BorderLayout.SOUTH);
+
+        return panelOptimizacion;
+    }
+
+    private void guardarCodigoOptimizado() {
+        String codigoOpt = areaOptNuevo.getText().trim();
+        if (codigoOpt.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Primero analiza un código válido para generar la versión optimizada.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos de texto (*.txt)", "txt");
+        fileChooser.setFileFilter(filtro);
+
+        String sugerido = (archivoActual != null)
+                ? archivoActual.getName().replaceFirst("(\\.txt)?$", "_optimizado.txt")
+                : "codigo_optimizado.txt";
+        fileChooser.setSelectedFile(new File(sugerido));
+
+        int seleccion = fileChooser.showSaveDialog(this);
+        if (seleccion == JFileChooser.APPROVE_OPTION) {
+            File destino = fileChooser.getSelectedFile();
+            if (!destino.getName().toLowerCase().endsWith(".txt")) {
+                destino = new File(destino.getAbsolutePath() + ".txt");
+            }
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(destino))) {
+                writer.write(codigoOpt);
+                JOptionPane.showMessageDialog(this, "Código optimizado guardado en:\n" + destino.getAbsolutePath(), "Guardado exitoso", JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error al guardar el archivo optimizado: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private void cambiarVista(String vista) {
         cardLayout.show(panelVistas, vista);
         
-        // Reiniciar colores de todos los botones
-        btnVistaLexico.setBackground(btnInactivo);
-        btnVistaLexico.setForeground(textDark);
-        btnVistaSemantico.setBackground(btnInactivo);
-        btnVistaSemantico.setForeground(textDark);
-        btnVistaIntermedio.setBackground(btnInactivo);
-        btnVistaIntermedio.setForeground(textDark);
-        btnVistaSalidas.setBackground(btnInactivo);
-        btnVistaSalidas.setForeground(textDark);
+        JButton[] botones = {btnVistaLexico, btnVistaSintactico, btnVistaSemantico, btnVistaIntermedio, btnVistaOptimizacion, btnVistaSalidas};
+        for (JButton b : botones) {
+            b.setBackground(btnInactivo);
+            b.setForeground(textDark);
+        }
         
-        // Pintar el botón activo de color oscuro
         if (vista.equals("LEXICO")) {
             btnVistaLexico.setBackground(textDark);
             btnVistaLexico.setForeground(Color.WHITE);
+        } else if (vista.equals("SINTACTICO")) {
+            btnVistaSintactico.setBackground(textDark);
+            btnVistaSintactico.setForeground(Color.WHITE);
         } else if (vista.equals("SEMANTICO")) {
             btnVistaSemantico.setBackground(textDark);
             btnVistaSemantico.setForeground(Color.WHITE);
         } else if (vista.equals("INTERMEDIO")) {
             btnVistaIntermedio.setBackground(textDark);
             btnVistaIntermedio.setForeground(Color.WHITE);
+        } else if (vista.equals("OPTIMIZACION")) {
+            btnVistaOptimizacion.setBackground(textDark);
+            btnVistaOptimizacion.setForeground(Color.WHITE);
         } else if (vista.equals("SALIDAS")) {
             btnVistaSalidas.setBackground(textDark);
             btnVistaSalidas.setForeground(Color.WHITE);
@@ -232,15 +372,17 @@ public class Interfaz extends JFrame {
         JMenu menuArchivo = new JMenu("Archivo");
         
         JMenuItem itemNuevo = new JMenuItem("Nuevo");
-        JMenuItem itemAbrir = new JMenuItem("Abrir...");
+        JMenuItem itemAbrir = new JMenuItem("Abrir");
         JMenuItem itemGuardar = new JMenuItem("Guardar");
-        JMenuItem itemGuardarComo = new JMenuItem("Guardar como...");
+        JMenuItem itemGuardarComo = new JMenuItem("Guardar como");
+        JMenuItem itemGuardarOpt = new JMenuItem("Guardar código optimizado");
         JMenuItem itemSalir = new JMenuItem("Salir");
 
         itemNuevo.addActionListener(e -> nuevoArchivo());
         itemAbrir.addActionListener(e -> abrirArchivo());
         itemGuardar.addActionListener(e -> guardarArchivo());
         itemGuardarComo.addActionListener(e -> guardarComoArchivo());
+        itemGuardarOpt.addActionListener(e -> guardarCodigoOptimizado());
         itemSalir.addActionListener(e -> salirDelPrograma());
 
         menuArchivo.add(itemNuevo);
@@ -248,6 +390,8 @@ public class Interfaz extends JFrame {
         menuArchivo.addSeparator();
         menuArchivo.add(itemGuardar);
         menuArchivo.add(itemGuardarComo);
+        menuArchivo.addSeparator();
+        menuArchivo.add(itemGuardarOpt);
         menuArchivo.addSeparator();
         menuArchivo.add(itemSalir);
 
@@ -264,6 +408,15 @@ public class Interfaz extends JFrame {
             }
             numerosLinea.setText(textoNumeros.toString());
         });
+    }
+
+    private void actualizarLineasOptimizacion(JTextArea areaTexto, JTextArea areaNumeros) {
+        int totalLineas = Math.max(1, areaTexto.getLineCount());
+        StringBuilder textoNumeros = new StringBuilder();
+        for (int i = 1; i <= totalLineas; i++) {
+            textoNumeros.append(i).append("\n");
+        }
+        areaNumeros.setText(textoNumeros.toString());
     }
     
     private void marcarComoModificado() {
@@ -376,8 +529,11 @@ public class Interfaz extends JFrame {
     private void analizarCodigo() {
         modeloLexico.setRowCount(0);
         modeloSintactico.setRowCount(0);
+        modeloSemantico.setRowCount(0);
+        modeloCambiosOpt.setRowCount(0);
         consola.setText("");
         areaIntermedio.setText("");
+        areaOptNuevo.setText("");
         
         String texto = editorCodigo.getText().trim();
         if (texto.isEmpty()) {
@@ -402,27 +558,71 @@ public class Interfaz extends JFrame {
                 }
             }
             
-            String estadoSintactico = (linea.error == null) ? "Correcto" : linea.error;
-            
             if (!linea.contenido.trim().isEmpty()) {
+                // Poblar Tabla Sintáctica independiente
+                String estadoSintactico = (linea.errorSintactico == null) ? "Correcto" : linea.errorSintactico;
                 modeloSintactico.addRow(new Object[]{linea.numeroLinea, linea.contenido, estadoSintactico});
+
+                // Poblar Tabla Semántica independiente
+                String estadoSemantico;
+                if (linea.errorSintactico != null) {
+                    estadoSemantico = "No evaluado (Error Sintáctico previo)";
+                } else {
+                    estadoSemantico = (linea.errorSemantico == null) ? "Correcto" : linea.errorSemantico;
+                }
+                modeloSemantico.addRow(new Object[]{linea.numeroLinea, linea.contenido, estadoSemantico});
             }
 
-            if (linea.error != null) {
-                String tipoError = linea.error.startsWith("Error Sintáctico") ? "SINTÁCTICO" : "SEMÁNTICO";
-                errores.append(tipoError + " (Línea ").append(linea.numeroLinea).append("): ").append(linea.error).append("\n");
+            if (linea.errorSintactico != null) {
+                errores.append("SINTÁCTICO (Línea ").append(linea.numeroLinea).append("): ").append(linea.errorSintactico).append("\n");
+            }
+            if (linea.errorSemantico != null) {
+                errores.append("SEMÁNTICO (Línea ").append(linea.numeroLinea).append("): ").append(linea.errorSemantico).append("\n");
             }
         }
         
         if (errores.length() == 0) {
             consola.setText("El programa es válido.");
-            // Generar el reporte de notaciones y cuádruplos
+            
+            // 1. Generar el reporte de Código Intermedio (Original y Optimizado)
             String reporteIntermedio = CodigoIntermedio.generarReporte(resultados);
             areaIntermedio.setText(reporteIntermedio);
             areaIntermedio.setCaretPosition(0);
+            
+            // 2. Generar Optimización con bitácora de líneas sustituidas
+            long inicioTiempo = System.currentTimeMillis();
+            Optimizador.ResultadoOptimizacion resOpt = Optimizador.optimizarConDetalle(texto);
+            long finTiempo = System.currentTimeMillis();
+            long tiempoTotal = finTiempo - inicioTiempo;
+            
+            String codigoOptimizado = resOpt.codigoOptimizado;
+            areaOptNuevo.setText(codigoOptimizado);
+            areaOptNuevo.setCaretPosition(0);
+            actualizarLineasOptimizacion(areaOptNuevo, numerosOptNuevo);
+
+            for (Optimizador.CambioOptimizacion c : resOpt.cambios) {
+                modeloCambiosOpt.addRow(new Object[]{
+                        c.numeroLinea,
+                        c.tecnica,
+                        c.lineaOriginal,
+                        c.lineaOptimizada
+                });
+            }
+            
+            int bytesOriginal = texto.getBytes(StandardCharsets.UTF_8).length;
+            int bytesOptimizado = codigoOptimizado.getBytes(StandardCharsets.UTF_8).length;
+            int lineasOrig = texto.split("\\r?\\n").length;
+            int lineasOpt = codigoOptimizado.isEmpty() ? 0 : codigoOptimizado.split("\\r?\\n").length;
+            
+            lblMetricasOptimizacion.setText(String.format(
+                    " Tiempo: %d ms | Líneas: %d -> %d | Cambios: %d | Tamaño original: %d bytes | Optimizado: %d bytes",
+                    tiempoTotal, lineasOrig, lineasOpt, resOpt.cambios.size(), bytesOriginal, bytesOptimizado));
         } else {
             consola.setText("Se encontraron errores:\n\n" + errores.toString());
             areaIntermedio.setText("No se puede generar el código intermedio debido a que existen errores en el código fuente.\nCorrige los errores.");
+            areaOptNuevo.setText("No se puede optimizar el código debido a que existen errores en el código fuente.\nCorrige los errores.");
+            actualizarLineasOptimizacion(areaOptNuevo, numerosOptNuevo);
+            lblMetricasOptimizacion.setText(" Optimización cancelada por errores en el código fuente.");
         }
     }
 
@@ -430,8 +630,13 @@ public class Interfaz extends JFrame {
         editorCodigo.setText(""); 
         modeloLexico.setRowCount(0);
         modeloSintactico.setRowCount(0);
+        modeloSemantico.setRowCount(0);
+        modeloCambiosOpt.setRowCount(0);
         consola.setText("");
         areaIntermedio.setText("");
+        areaOptNuevo.setText("");
+        numerosOptNuevo.setText("1");
+        lblMetricasOptimizacion.setText(" Tiempo de optimización: 0 ms | Tamaño original: 0 bytes | Optimizado: 0 bytes");
         actualizarLineas(); 
         cambiarVista("LEXICO");
     }

@@ -21,25 +21,30 @@ public class MiniCode {
         // PASADA 1.5: Pre-cargar funciones en la Tabla de Símbolos
         Semantico.preCargarFunciones(resultados);
 
-        // PASADA 2: Análisis Sintáctico y Semántico
+        // PASADA 2: Análisis Sintáctico y Semántico separados
         for (AnalisisLinea analisis : resultados) {
             if (!analisis.contenido.isEmpty() && !Lexer.esComentario(analisis.contenido)) {
                 
-                String errorSintactico = Parser.validarSintaxis(analisis);
+                String errSint = Parser.validarSintaxis(analisis);
                 
-                if (errorSintactico != null) {
-                    analisis.error = errorSintactico;
+                if (errSint != null) {
+                    analisis.errorSintactico = errSint;
+                    analisis.error = errSint;
                 } else {
-                    String errorSemantico = Semantico.validarSemantica(analisis);
-                    if (errorSemantico != null) {
-                        analisis.error = errorSemantico;
+                    String errSem = Semantico.validarSemantica(analisis);
+                    if (errSem != null) {
+                        analisis.errorSemantico = errSem;
+                        analisis.error = errSem;
                     }
                 }
             }
         }
         
-        if (!Parser.stackEstructuras.isEmpty()) {
-            resultados.get(resultados.size() - 1).error = "Error Sintáctico Crítico: Falta cerrar " + Parser.stackEstructuras.size() + " llave(s) '}'.";
+        if (!Parser.stackEstructuras.isEmpty() && !resultados.isEmpty()) {
+            String errLlaves = "Error Sintáctico Crítico: Falta cerrar " + Parser.stackEstructuras.size() + " llave(s) '}'.";
+            AnalisisLinea ultima = resultados.get(resultados.size() - 1);
+            ultima.errorSintactico = errLlaves;
+            ultima.error = errLlaves;
         }
         return resultados;
     }

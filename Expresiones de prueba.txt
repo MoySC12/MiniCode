@@ -2,81 +2,196 @@ package main
 
 import "fmt"
 
+// 1. Declaración de constantes globales para propagación de constantes
+const PI = 3.1416
+const GRAVEDAD = 9.81
+const TASA_IVA = 0.16
+const FACTOR_ESCALA = 4
+const BONO_BASE = 250
+
+// 2. Función con parámetros float64, expresiones aritméticas y retorno
+func calcularEnergiaMecanica(masa float64, altura float64, velocidad float64) float64 {
+    // Expresión de energía potencial
+    var energiaPotencial float64
+    energiaPotencial = masa * GRAVEDAD * altura
+
+    // Expresión de energía cinética con paréntesis y potencia
+    var energiaCinetica float64
+    energiaCinetica = (masa * (velocidad ^ 2)) / 2.0
+
+    // Suma de energías con ajuste constante
+    var energiaTotal float64
+    energiaTotal = energiaPotencial + energiaCinetica + 12.5 * 2.0
+
+    fmt.Println("Energia calculada:", energiaTotal)
+    return energiaTotal
+}
+
+// 3. Función con parámetros int, condicionales y bucle for
+func procesarLoteProduccion(unidadesBase int, turnos int) int {
+    var metaMinima int
+    metaMinima = 100
+
+    // Expresión con múltiples niveles de precedencia
+    var produccionBruta int
+    produccionBruta = unidadesBase * turnos + BONO_BASE / 5 - 10
+
+    var mermaEstimada int
+    mermaEstimada = (unidadesBase + 20) / FACTOR_ESCALA
+
+    var produccionNeta int
+    produccionNeta = produccionBruta - mermaEstimada
+
+    if produccionNeta >= metaMinima {
+        fmt.Println("Meta de produccion alcanzada:", produccionNeta)
+    } else {
+        fmt.Println("Produccion por debajo de la meta:", produccionNeta)
+    }
+
+    // Ciclo for para acumular ajuste por turno
+    var iterador int
+    iterador = 1
+    var acumuladoTurno int
+    acumuladoTurno = 0
+
+    for iterador <= turnos {
+        acumuladoTurno = acumuladoTurno + iterador * FACTOR_ESCALA
+        iterador = iterador + 1
+    }
+
+    var resultadoFinal int
+    resultadoFinal = produccionNeta + acumuladoTurno
+    return resultadoFinal
+}
+
+// 4. Función booleana para evaluar condiciones relacionales y lógicas
+func validarEstadoSistema(temperatura float64, presion float64, activo bool) bool {
+    var tempMaxima float64
+    tempMaxima = 95.5
+    var presionMaxima float64
+    presionMaxima = 120.0
+
+    var tempSegura bool
+    tempSegura = temperatura < tempMaxima
+
+    var presionSegura bool
+    presionSegura = presion <= presionMaxima
+
+    var estadoOperativo bool
+    estadoOperativo = tempSegura && presionSegura && activo
+
+    if !estadoOperativo {
+        fmt.Println("Alerta: Sistema fuera de parametros seguros")
+    } else {
+        fmt.Println("Sistema operando dentro de parametros normales")
+    }
+
+    return estadoOperativo
+}
+
+// 5. Función principal con bloque de optimización y código intermedio
 func main() {
-    var A int
-    A = 10
-    var B int
-    B = 5
-    var C int
-    C = 2
-    var D int
-    D = 4
-    var E int
-    E = 2
-    var F int
-    F = 1
-    var G int
-    G = 3
-    var H int
-    H = 6
+    // Mensaje de inicio del sistema
+    var tituloSistema string
+    tituloSistema = "=== INICIANDO PRUEBA ==="
+    fmt.Println(tituloSistema)
 
-    // Ejercicio 1
-    e1 := A + B
-    fmt.Println(e1)
+    // SECCIÓN A: Variables constantes candidatas a Propagación y Eliminación
+    A := 10
+    B := 5
+    C := 2
+    D := 4
+    E := 2
+    F := 1
+    G := 3
+    H := 6
 
-    // Ejercicio 2
-    e2 := A + B * C
-    fmt.Println(e2)
+    // SECCIÓN B: Expresiones para plegado de constantes (Constant Folding)
+    plegado1 := 20 + 15 * 4 - 10
+    plegado2 := 100 / 5 + 8 * 3 - 4
+    plegado3 := 50 * 2 - 30 / 3 + 15
 
-    // Ejercicio 3
-    e3 := (A + B) * C
-    fmt.Println(e3)
+    fmt.Println("Plegado 1:", plegado1)
+    fmt.Println("Plegado 2:", plegado2)
+    fmt.Println("Plegado 3:", plegado3)
 
-    // Ejercicio 4
-    e4 := A * B + C / D
-    fmt.Println(e4)
+    // Operaciones encadenadas para propagación en cascada y código muerto
+    pasoIntermedio1 := A + B * C
+    pasoIntermedio2 := pasoIntermedio1 * D - E
+    resultadoCascada := pasoIntermedio2 + G * H
 
-    // Ejercicio 5
-    e5 := (A + B) * (C - D)
-    fmt.Println(e5)
+    fmt.Println("Resultado en cascada:", resultadoCascada)
 
-    // Ejercicio 6
-    e6 := A + (B - C) * D
-    fmt.Println(e6)
+    // SECCIÓN C: Expresiones complejas (Cuádruplos, Prefija, Posfija)
+    // Expresión 1: Precedencia básica y paréntesis
+    exp1 := (A + B) * C - D
+    fmt.Println("Exp 1:", exp1)
 
-    // Ejercicio 7
-    e7 := (A - B) / C + D
-    fmt.Println(e7)
+    // Expresión 2: División y multiplicación combinadas
+    exp2 := A * B + C / D
+    fmt.Println("Exp 2:", exp2)
 
-    // Ejercicio 8
-    e8 := A * (B + C) - D / E
-    fmt.Println(e8)
+    // Expresión 3: Agrupaciones dobles
+    exp3 := (A + B) * (C - D)
+    fmt.Println("Exp 3:", exp3)
 
-    // Ejercicio 9
-    e9 := (A + B) / (C - D) + E
-    fmt.Println(e9)
+    // Expresión 4: Subexpresión entre paréntesis multiplicada
+    exp4 := A + (B - C) * D
+    fmt.Println("Exp 4:", exp4)
 
-    // Ejercicio 10
-    e10 := A + B * (C - D) / E
-    fmt.Println(e10)
+    // Expresión 5: División de agrupación más desplazamiento
+    exp5 := (A - B) / C + D
+    fmt.Println("Exp 5:", exp5)
 
-    // Ejercicio 11
-    e11 := ((A + B) * C) - D
-    fmt.Println(e11)
+    // Expresión 6: Combinación de suma agrupada y cociente
+    exp6 := A * (B + C) - D / E
+    fmt.Println("Exp 6:", exp6)
 
-    // Ejercicio 12
-    e12 := (A - B) * (C + D) / (E - F)
-    fmt.Println(e12)
+    // Expresión 7: Cociente de dos agrupaciones
+    exp7 := (A + B) / (C - D) + E
+    fmt.Println("Exp 7:", exp7)
 
-    // Ejercicio 13
-    e13 := A + B * (C ^ D - E) / (F + G) - H
-    fmt.Println(e13)
+    // Expresión 8: Multiplicación y división sobre agrupación
+    exp8 := A + B * (C - D) / E
+    fmt.Println("Exp 8:", exp8)
 
-    // Ejercicio 14
-    e14 := ((A + B) / C) ^ (D - E)
-    fmt.Println(e14)
+    // Expresión 9: Tres bloques agrupados con multiplicación y división
+    exp9 := (A - B) * (C + D) / (E - F)
+    fmt.Println("Exp 9:", exp9)
 
-    // Ejercicio 15
-    e15 := ((A - B) * (C + D)) ^ (E / F)
-    fmt.Println(e15)
+    // Expresión 10: Potencia, paréntesis y múltiples operadores
+    exp10 := A + B * (C ^ D - E) / (F + G) - H
+    fmt.Println("Exp 10:", exp10)
+
+    // Expresión 11: Potencia de dos subexpresiones agrupadas
+    exp11 := ((A + B) / C) ^ (D - E)
+    fmt.Println("Exp 11:", exp11)
+
+    // Expresión 12: Potencia con producto de binomios en la base
+    exp12 := ((A - B) * (C + D)) ^ (E / F)
+    fmt.Println("Exp 12:", exp12)
+
+    // SECCIÓN D: Invocación de funciones, ámbitos y tipos de retorno
+    var energiaCalculada float64
+    energiaCalculada = calcularEnergiaMecanica(12.5, 8.0, 4.0)
+    fmt.Println("Retorno Energia:", energiaCalculada)
+
+    var totalProduccion int
+    totalProduccion = procesarLoteProduccion(45, 3)
+    fmt.Println("Retorno Produccion:", totalProduccion)
+
+    var sistemaOk bool
+    sistemaOk = validarEstadoSistema(78.4, 105.0, true)
+    fmt.Println("Estado del sistema:", sistemaOk)
+
+    // Cálculo financiero final usando constantes globales
+    var subtotal float64
+    subtotal = 1500.0 + 250.0 * 2.0
+    var totalConImpuesto float64
+    totalConImpuesto = subtotal + subtotal * TASA_IVA
+    fmt.Println("Total con IVA:", totalConImpuesto)
+
+    var cierreSistema string
+    cierreSistema = "=== EJECUCION Y ANALISIS COMPLETADOS ==="
+    fmt.Println(cierreSistema)
 }
